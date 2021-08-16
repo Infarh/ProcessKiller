@@ -5,12 +5,56 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:l="clr-namespace:ProcessKiller"
         xmlns:vm="clr-namespace:ProcessKiller.ViewModels"
+        xmlns:diagnostics="clr-namespace:System.Diagnostics;assembly=System.Diagnostics.Process"
         Title="{Binding Title}"
-        Width="269" Height="438">
+        ShowInTaskbar="False"
+        Width="329" Height="438"
+        Activated="MainWindow_OnActivated"
+        ResizeMode="NoResize" 
+        WindowStartupLocation="CenterScreen" 
+        Topmost="True" 
+        WindowStyle="ToolWindow">
+    <Window.InputBindings>
+        <KeyBinding Key="Enter" Command="{Binding KillProcessCommand, Mode=OneTime}" CommandParameter="{Binding SelectedProcess}"/>
+        <KeyBinding Key="F5" Command="{Binding UpdateProcessesCommand, Mode=OneTime}"/>
+    </Window.InputBindings>
     <Window.DataContext>
         <vm:MainWindowViewModel/>
     </Window.DataContext>
-    <Grid>
-
-    </Grid>
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top" Margin="5,5,5,0">
+            <Button Content="Upd"
+                    Command="{Binding UpdateProcessesCommand, Mode=OneTime}" 
+                    Margin="3" Padding="5,3"
+                    Background="WhiteSmoke"/>
+            <Button Content="Kill" 
+                    Command="{Binding KillProcessCommand, Mode=OneTime}" 
+                    CommandParameter="{Binding SelectedProcess}"
+                    Margin="3" Padding="5,3"
+                    Background="WhiteSmoke"/>
+        </DockPanel>
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem Content="{Binding SelectedProcess.ProcessName}"/>
+        </StatusBar>
+        <ListBox ItemsSource="{Binding Processes}" SelectedItem="{Binding SelectedProcess}" Margin="5">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="diagnostics:Process">
+                    <TextBlock ToolTip="{Binding MainModule.FileName}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Responding, Mode=OneTime}" Value="False">
+                                        <Setter Property="Foreground" Value="Red"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                        [id:<TextBlock Text="{Binding Id}"/>]
+                        <TextBlock Text="{Binding ProcessName, Mode=OneTime}"/>
+                    </TextBlock>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
 </Window>
