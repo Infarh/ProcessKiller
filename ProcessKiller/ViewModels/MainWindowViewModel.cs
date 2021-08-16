@@ -1,9 +1,18 @@
-﻿using ProcessKiller.ViewModels.Base;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using ProcessKiller.ViewModels.Base;
 
 namespace ProcessKiller.ViewModels
 {
     public class MainWindowViewModel : ViewModel
     {
+        public MainWindowViewModel()
+        {
+            if (App.IsInDesign) return;
+
+
+        }
+
         #region Title : string - Заголовок окна
 
         /// <summary>Заголовок окна</summary>
@@ -13,5 +22,7 @@ namespace ProcessKiller.ViewModels
         public string Title { get => _Title; set => Set(ref _Title, value); }
 
         #endregion
+
+        public IEnumerable<Process> Processes => Process.GetProcesses();
     }
 }

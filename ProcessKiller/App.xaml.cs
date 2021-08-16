@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 
 namespace ProcessKiller
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
-    public partial class App : Application
+    public partial class App
     {
+        public static bool IsInDesign { get; private set; } = true;
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            IsInDesign = false;
+            base.OnStartup(e);
+        }
     }
 }
