@@ -9,7 +9,6 @@
         Title="{Binding Title}"
         ShowInTaskbar="False"
         Width="329" Height="438"
-        Activated="MainWindow_OnActivated"
         ResizeMode="NoResize" 
         WindowStartupLocation="CenterScreen" 
         Topmost="True" 
@@ -36,7 +35,8 @@
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem Content="{Binding SelectedProcess.ProcessName}"/>
         </StatusBar>
-        <ListBox ItemsSource="{Binding Processes}" SelectedItem="{Binding SelectedProcess}" Margin="5">
+        <ListBox ItemsSource="{Binding Processes}" SelectedItem="{Binding SelectedProcess}" Margin="5"
+                 MouseDoubleClick="ProcessList_OnMouseDoubleClick">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="diagnostics:Process">
                     <TextBlock ToolTip="{Binding MainModule.FileName}">

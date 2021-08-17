@@ -26,6 +26,16 @@ namespace ProcessKiller.ViewModels
 
         #endregion
 
+        #region CanClose : bool - Возможность завершения работы приложения
+
+        /// <summary>Возможность завершения работы приложения</summary>
+        private bool _CanClose;
+
+        /// <summary>Возможность завершения работы приложения</summary>
+        public bool CanClose { get => _CanClose; set => Set(ref _CanClose, value); }
+
+        #endregion
+
         #region SelectedProcess : Process - Выбранный процесс
 
         /// <summary>Выбранный процесс</summary>
