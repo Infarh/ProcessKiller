@@ -11,8 +11,14 @@ namespace ProcessKiller.Commands.Base
             remove => CommandManager.RequerySuggested -= value;
         }
 
-        public virtual bool CanExecute(object? parameter) => true;
+        bool ICommand.CanExecute(object? parameter) => CanExecute(parameter);
+        protected virtual bool CanExecute(object? parameter) => true;
 
-        public abstract void Execute(object? parameter);
+        void ICommand.Execute(object? parameter)
+        {
+            if (((ICommand)this).CanExecute(parameter))
+                CanExecute(parameter);
+        }
+        protected abstract void Execute(object? parameter);
     }
 }

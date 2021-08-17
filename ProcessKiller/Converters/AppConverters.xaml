@@ -1,0 +1,8 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:l="clr-namespace:ProcessKiller.Converters">
+
+    <l:ProcessTimePercent x:Key="ProcessTimePercentConverter"/>
+    <l:ProcessUserTimePercent x:Key="ProcessUserTimePercentConverter"/>
+
+</ResourceDictionary>

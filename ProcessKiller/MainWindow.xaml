@@ -22,15 +22,22 @@
     </Window.DataContext>
     <DockPanel>
         <DockPanel DockPanel.Dock="Top" Margin="5,5,5,0">
-            <Button Content="Upd"
-                    Command="{Binding UpdateProcessesCommand, Mode=OneTime}" 
-                    Margin="3" Padding="5,3"
-                    Background="WhiteSmoke"/>
-            <Button Content="Kill" 
+            <TextBlock Text="{Binding SelectedProcess.Id, StringFormat=pid:{0}}" Margin="0,0,3,0"/>
+            <TextBlock Text="{Binding SelectedProcess.PriorityClass, StringFormat=pri:{0}}"/>
+            <TextBlock Text="{Binding SelectedProcess.BasePriority, StringFormat=({0})}"/>
+        </DockPanel>
+        <DockPanel DockPanel.Dock="Top" Margin="5,5,5,0">
+            <TextBlock Text="{Binding SelectedProcess, Converter={StaticResource ProcessUserTimePercentConverter}, StringFormat=Ut:{0:p1}}" Margin="0,0,3,0"/>
+            <TextBlock Text="{Binding SelectedProcess, Converter={StaticResource ProcessTimePercentConverter}, StringFormat=t:{0:p1}}" Margin="0,0,3,0"/>
+        </DockPanel>
+        <DockPanel DockPanel.Dock="Top" Margin="5,5,5,0">
+            <Button Content="Kill"
                     Command="{Binding KillProcessCommand, Mode=OneTime}" 
                     CommandParameter="{Binding SelectedProcess}"
-                    Margin="3" Padding="5,3"
-                    Background="WhiteSmoke"/>
+                    Margin="3" Padding="15,3"/>
+            <Button Content="Upd"
+                    Command="{Binding UpdateProcessesCommand, Mode=OneTime}" 
+                    Margin="3" Padding="15,3"/>
         </DockPanel>
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem Content="{Binding SelectedProcess.ProcessName}"/>

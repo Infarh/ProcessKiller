@@ -14,8 +14,8 @@ namespace ProcessKiller.Commands
             _CanExecute = CanExecute;
         }
 
-        public override bool CanExecute(object? parameter) => _CanExecute?.Invoke(parameter) ?? true;
+        protected override bool CanExecute(object? parameter) => _CanExecute?.Invoke(parameter) ?? true;
 
-        public override void Execute(object? parameter) => _Execute(parameter);
+        protected override void Execute(object? parameter) => _Execute(parameter);
     }
 }

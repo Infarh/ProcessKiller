@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -16,6 +17,14 @@ namespace ProcessKiller.ViewModels
 {
     public class MainWindowViewModel : ViewModel
     {
+        public MainWindowViewModel()
+        {
+            //PresentationTraceSources.DataBindingSource.Listeners.Add(new BindingErrorTraceListener(this));
+            //PresentationTraceSources.DataBindingSource.Switch.Level = SourceLevels.Error;
+        }
+
+        private readonly HashSet<int> _BadPID = new();
+
         #region Title : string - Заголовок окна
 
         /// <summary>Заголовок окна</summary>
@@ -42,7 +51,11 @@ namespace ProcessKiller.ViewModels
         private Process? _SelectedProcess;
 
         /// <summary>Выбранный процесс</summary>
-        public Process? SelectedProcess { get => _SelectedProcess; set => Set(ref _SelectedProcess, value); }
+        public Process? SelectedProcess
+        {
+            get => _SelectedProcess;
+            set => Set(ref _SelectedProcess, value);
+        }
 
         #endregion
 
@@ -55,7 +68,16 @@ namespace ProcessKiller.ViewModels
                 if (_Processes is null) UpdateProcesses();
                 return _Processes;
             }
-            private set => Set(ref _Processes, value);
+            private set
+            {
+                var old = _Processes;
+                if(!Set(ref _Processes, value)) return;
+                if(old != null)
+                    foreach (var process in old)
+                        process.Dispose();
+                SelectedProcess = value?.FirstOrDefault();
+                Title = $"({value?.Count ?? 0}) Process Killer";
+            }
         }
 
 
@@ -74,7 +96,6 @@ namespace ProcessKiller.ViewModels
         {
             await Task.Yield().ConfigureAwait();
             Processes = new ObservableCollection<Process>(Process.GetProcesses().Where(CheckProcess).OrderByDescending(p => p.StartTime));
-            SelectedProcess = _Processes?.FirstOrDefault();
         }
 
         [Flags]
@@ -102,12 +123,16 @@ namespace ProcessKiller.ViewModels
             int ProcessId
         );
 
-        private static bool CheckProcess(Process process)
+        private bool CheckProcess(Process process)
         {
+            if (_BadPID.Contains(process.Id)) return false;
             const ProcessAccessFlags flags = ProcessAccessFlags.Synchronize | ProcessAccessFlags.QueryLimitedInformation;
 
             using var handle = OpenProcess(flags, false, process.Id);
-            return Marshal.GetLastWin32Error() == 0 && !process.HasExited;
+            var success = Marshal.GetLastWin32Error() == 0 && !process.HasExited;
+            if (!success)
+                _BadPID.Add(process.Id);
+            return success;
         }
 
         #endregion
@@ -118,7 +143,21 @@ namespace ProcessKiller.ViewModels
         private LambdaCommand? _KillProcessCommand;
 
         /// <summary>Убить процесс</summary>
-        public ICommand KillProcessCommand => _KillProcessCommand ??= new(OnKillProcessCommandExecuted, p => p is Process { HasExited: false });
+        public ICommand KillProcessCommand => _KillProcessCommand ??= new(OnKillProcessCommandExecuted, OnKillProcessCommandCanExecuted);
+
+        private bool OnKillProcessCommandCanExecuted(object? p)
+        {
+            if (p is not Process process || _BadPID.Contains(process.Id)) return false;
+            try
+            {
+                return !process.HasExited;
+            }
+            catch (Win32Exception)
+            {
+                _BadPID.Add(process.Id);
+                return false;
+            }
+        }
 
         /// <summary>Логика выполнения - Убить процесс</summary>
         private void OnKillProcessCommandExecuted(object? p)
@@ -131,10 +170,11 @@ namespace ProcessKiller.ViewModels
             }
             catch (Win32Exception e)
             {
+                _BadPID.Add(process.Id);
+                _Processes.Remove(process);
                 MessageBox.Show(e.Message, "Ошибка доступа", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            processes.Remove(process);
-            SelectedProcess = processes.FirstOrDefault();
+            UpdateProcesses();
         }
 
         #endregion

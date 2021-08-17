@@ -4,6 +4,11 @@
              xmlns:l="clr-namespace:ProcessKiller"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+         <ResourceDictionary>
+             <ResourceDictionary.MergedDictionaries>
+                 <ResourceDictionary Source="/Styles/AppStyles.xaml"/>
+                 <ResourceDictionary Source="/Converters/AppConverters.xaml"/>
+             </ResourceDictionary.MergedDictionaries>
+         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Navigation;
 using ProcessKiller.Service;
 
 namespace ProcessKiller
 {
-    public partial class App : Application
+    public partial class App
     {
         private static HotKey? __ActivationHotKey;
 
