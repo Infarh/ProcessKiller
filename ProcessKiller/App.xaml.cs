@@ -14,6 +14,7 @@ namespace ProcessKiller
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
             __ActivationHotKey = HotKey.Register(Key.Oem3, KeyModifier.Ctrl | KeyModifier.Shift)
                 ?? throw new InvalidOperationException("Не удалось зарегистрировать сочетание клавиш активации окна");
             __ActivationHotKey.Pressed += ActivationHotKey_OnPressed;
