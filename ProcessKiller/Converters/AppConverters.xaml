@@ -4,5 +4,7 @@
 
     <l:ProcessTimePercent x:Key="ProcessTimePercentConverter"/>
     <l:ProcessUserTimePercent x:Key="ProcessUserTimePercentConverter"/>
+    <l:MemorySize x:Key="MemorySizeConverter"/>
+    <l:MemorySizeUnit x:Key="MemorySizeUnitConverter"/>
 
 </ResourceDictionary>

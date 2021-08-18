@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:l="clr-namespace:ProcessKiller"
         xmlns:vm="clr-namespace:ProcessKiller.ViewModels"
-        xmlns:diagnostics="clr-namespace:System.Diagnostics;assembly=System.Diagnostics.Process"
+        xmlns:ds="clr-namespace:System.Diagnostics;assembly=System.Diagnostics.Process"
         Title="{Binding Title}"
         ShowInTaskbar="False"
-        Width="329" Height="438"
+        Width="482" Height="438"
         ResizeMode="NoResize" 
         WindowStartupLocation="CenterScreen" 
         Topmost="True" 
@@ -31,35 +31,115 @@
             <TextBlock Text="{Binding SelectedProcess, Converter={StaticResource ProcessTimePercentConverter}, StringFormat=t:{0:p1}}" Margin="0,0,3,0"/>
         </DockPanel>
         <DockPanel DockPanel.Dock="Top" Margin="5,5,5,0">
-            <Button Content="Kill"
+            <DockPanel.Resources>
+                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                    <Setter Property="Margin" Value="3"/>
+                    <Setter Property="Padding" Value="15,3"/>
+                </Style>
+            </DockPanel.Resources>
+            <Button Content="Kill" FontWeight="Bold"
                     Command="{Binding KillProcessCommand, Mode=OneTime}" 
-                    CommandParameter="{Binding SelectedProcess}"
-                    Margin="3" Padding="15,3"/>
-            <Button Content="Upd"
-                    Command="{Binding UpdateProcessesCommand, Mode=OneTime}" 
-                    Margin="3" Padding="15,3"/>
+                    CommandParameter="{Binding SelectedProcess}"/>
+            <Button Content="Mem" DockPanel.Dock="Right" Command="{Binding UpdateProcessesByWorkingSetCommand, Mode=OneTime}"/>
+            <Button Content="Proc" DockPanel.Dock="Right" Command="{Binding UpdateProcessesByProcessorTimeCommand, Mode=OneTime}"/>
+            <Button Content="Upd" Command="{Binding UpdateProcessesCommand, Mode=OneTime}"/>
         </DockPanel>
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem Content="{Binding SelectedProcess.ProcessName}"/>
         </StatusBar>
-        <ListBox ItemsSource="{Binding Processes}" SelectedItem="{Binding SelectedProcess}" Margin="5"
-                 MouseDoubleClick="ProcessList_OnMouseDoubleClick">
+        <ListBox ItemsSource="{Binding Processes, IsAsync=True}" 
+                 SelectedItem="{Binding SelectedProcess, IsAsync=True}"
+                 Margin="5"
+                 MouseDoubleClick="ProcessList_OnMouseDoubleClick"
+                 Grid.IsSharedSizeScope="True">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+            </ListBox.ItemContainerStyle>
             <ListBox.ItemTemplate>
-                <DataTemplate DataType="diagnostics:Process">
-                    <TextBlock ToolTip="{Binding MainModule.FileName}">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Responding, Mode=OneTime}" Value="False">
-                                        <Setter Property="Foreground" Value="Red"/>
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                        [id:<TextBlock Text="{Binding Id}"/>]
-                        <TextBlock Text="{Binding ProcessName, Mode=OneTime}"/>
-                    </TextBlock>
+                <DataTemplate DataType="ds:Process">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="PID"/>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Priority"/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="MemorySize"/>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="MemorySizeUnit"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding Id, StringFormat=pid:{0}}">
+                            <TextBlock.ToolTip>
+                                <TextBlock>
+                                    <TextBlock Text="{Binding PriorityClass, IsAsync=True}"/>
+                                    (<TextBlock Text="{Binding BasePriority}"/>)
+                                </TextBlock>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                        <Grid Grid.Column="1" Width="6">
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+                            <Ellipse HorizontalAlignment="Center" Width="3" Height="3" Panel.ZIndex="1">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Grid.Row" Value="0"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding PriorityClass, IsAsync=True}" Value="RealTime">
+                                                <Setter Property="Grid.Row" Value="0"/>
+                                                <Setter Property="Fill" Value="DarkRed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding PriorityClass, IsAsync=True}" Value="High">
+                                                <Setter Property="Grid.Row" Value="1"/>
+                                                <Setter Property="Fill" Value="Red"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding PriorityClass, IsAsync=True}" Value="AboveNormal">
+                                                <Setter Property="Grid.Row" Value="2"/>
+                                                <Setter Property="Fill" Value="DarkOrange"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding PriorityClass, IsAsync=True}" Value="Normal">
+                                                <Setter Property="Grid.Row" Value="3"/>
+                                                <Setter Property="Fill" Value="Green"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding PriorityClass, IsAsync=True}" Value="BelowNormal">
+                                                <Setter Property="Grid.Row" Value="4"/>
+                                                <Setter Property="Fill" Value="GreenYellow"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding PriorityClass, IsAsync=True}" Value="Idle">
+                                                <Setter Property="Grid.Row" Value="5"/>
+                                                <Setter Property="Fill" Value="DarkGray"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <Border Grid.Row="0" Grid.RowSpan="6" HorizontalAlignment="Center" BorderThickness="0.5" BorderBrush="DarkGray" />
+                        </Grid>
+                        <TextBlock Grid.Column="2" Text="{Binding ProcessName}"/>
+
+                        <TextBlock Grid.Column="3" Text="{Binding WorkingSet64, Converter={StaticResource MemorySizeConverter}}" 
+                                   HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="4" Text="{Binding WorkingSet64, Converter={StaticResource MemorySizeUnitConverter}}"/>
+
+                        <Grid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Уничтожить"/>
+                                <MenuItem Header="Приоритет">
+                                    <MenuItem Header="RealTime"/>
+                                    <MenuItem Header="High"/>
+                                    <MenuItem Header="AboveNormal"/>
+                                    <MenuItem Header="Normal"/>
+                                    <MenuItem Header="BelowNormal"/>
+                                    <MenuItem Header="Idle"/>
+                                </MenuItem>
+                                <MenuItem Header="Показать окно"/>
+                            </ContextMenu>
+                        </Grid.ContextMenu>
+                    </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>

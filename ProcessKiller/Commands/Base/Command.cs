@@ -17,7 +17,7 @@ namespace ProcessKiller.Commands.Base
         void ICommand.Execute(object? parameter)
         {
             if (((ICommand)this).CanExecute(parameter))
-                CanExecute(parameter);
+                Execute(parameter);
         }
         protected abstract void Execute(object? parameter);
     }

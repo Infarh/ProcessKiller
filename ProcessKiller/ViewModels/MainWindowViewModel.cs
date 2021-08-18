@@ -8,7 +8,9 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+
 using Microsoft.Win32.SafeHandles;
+
 using ProcessKiller.Commands;
 using ProcessKiller.Service;
 using ProcessKiller.ViewModels.Base;
@@ -17,11 +19,11 @@ namespace ProcessKiller.ViewModels
 {
     public class MainWindowViewModel : ViewModel
     {
-        public MainWindowViewModel()
-        {
-            //PresentationTraceSources.DataBindingSource.Listeners.Add(new BindingErrorTraceListener(this));
-            //PresentationTraceSources.DataBindingSource.Switch.Level = SourceLevels.Error;
-        }
+        //public MainWindowViewModel()
+        //{
+        //    PresentationTraceSources.DataBindingSource.Listeners.Add(new BindingErrorTraceListener(this));
+        //    PresentationTraceSources.DataBindingSource.Switch.Level = SourceLevels.Error;
+        //}
 
         private readonly HashSet<int> _BadPID = new();
 
@@ -54,7 +56,12 @@ namespace ProcessKiller.ViewModels
         public Process? SelectedProcess
         {
             get => _SelectedProcess;
-            set => Set(ref _SelectedProcess, value);
+            set
+            {
+                if (value is null && _Processes is { Count: > 0 } processes) 
+                    value = processes[0];
+                Set(ref _SelectedProcess, value);
+            }
         }
 
         #endregion
@@ -71,11 +78,10 @@ namespace ProcessKiller.ViewModels
             private set
             {
                 var old = _Processes;
-                if(!Set(ref _Processes, value)) return;
-                if(old != null)
-                    foreach (var process in old)
-                        process.Dispose();
-                SelectedProcess = value?.FirstOrDefault();
+                if (!Set(ref _Processes, value)) return;
+                if (old != null) foreach (var process in old) process.Dispose();
+                var selected_process = value?.FirstOrDefault();
+                SelectedProcess = selected_process;
                 Title = $"({value?.Count ?? 0}) Process Killer";
             }
         }
@@ -96,6 +102,36 @@ namespace ProcessKiller.ViewModels
         {
             await Task.Yield().ConfigureAwait();
             Processes = new ObservableCollection<Process>(Process.GetProcesses().Where(CheckProcess).OrderByDescending(p => p.StartTime));
+        }
+
+        /// <summary>Обновление списка процессов, упорядоченных по объёму памяти</summary>
+        private LambdaCommand? _UpdateProcessesByWorkingSetCommand;
+
+        /// <summary>Обновление списка процессов, упорядоченных по объёму памяти</summary>
+        public ICommand UpdateProcessesByWorkingSetCommand => _UpdateProcessesByWorkingSetCommand ??= new(OnUpdateProcessesByWorkingSetCommandExecuted);
+
+        /// <summary>Логика выполнения - Обновление списка процессов, упорядоченных по объёму памяти</summary>
+        private void OnUpdateProcessesByWorkingSetCommandExecuted(object? p) => UpdateProcessesByWorkingSet();
+
+        private async void UpdateProcessesByWorkingSet()
+        {
+            await Task.Yield().ConfigureAwait();
+            Processes = new ObservableCollection<Process>(Process.GetProcesses().Where(CheckProcess).OrderByDescending(p => p.WorkingSet64));
+        }
+
+        /// <summary>Обновление списка процессов, упорядоченных по расходу процессорного времени</summary>
+        private LambdaCommand? _UpdateProcessesByProcessorTimeCommand;
+
+        /// <summary>Обновление списка процессов, упорядоченных по расходу процессорного времени</summary>
+        public ICommand UpdateProcessesByProcessorTimeCommand => _UpdateProcessesByProcessorTimeCommand ??= new(OnUpdateProcessesByProcessorTimeCommandExecuted);
+
+        /// <summary>Логика выполнения - Обновление списка процессов, упорядоченных по расходу процессорного времени</summary>
+        private void OnUpdateProcessesByProcessorTimeCommandExecuted(object? p) => UpdateProcessesByProcessorTime();
+
+        private async void UpdateProcessesByProcessorTime()
+        {
+            await Task.Yield().ConfigureAwait();
+            Processes = new ObservableCollection<Process>(Process.GetProcesses().Where(CheckProcess).OrderByDescending(p => p.TotalProcessorTime.TotalSeconds / (DateTime.Now - p.StartTime).TotalSeconds));
         }
 
         [Flags]
@@ -147,16 +183,23 @@ namespace ProcessKiller.ViewModels
 
         private bool OnKillProcessCommandCanExecuted(object? p)
         {
-            if (p is not Process process || _BadPID.Contains(process.Id)) return false;
-            try
-            {
-                return !process.HasExited;
-            }
-            catch (Win32Exception)
-            {
-                _BadPID.Add(process.Id);
-                return false;
-            }
+            if (p is not Process process) return false;
+            return true;
+            //try
+            //{
+            //    if (_BadPID.Contains(process.Id)) return false;
+            //    return !process.HasExited;
+            //}
+            //catch (Win32Exception)
+            //{
+            //    _BadPID.Add(process.Id);
+            //    return false;
+            //}
+            //catch (InvalidOperationException)
+            //{
+            //    Debug.WriteLine("Strange process");
+            //    return false;
+            //}
         }
 
         /// <summary>Логика выполнения - Убить процесс</summary>
